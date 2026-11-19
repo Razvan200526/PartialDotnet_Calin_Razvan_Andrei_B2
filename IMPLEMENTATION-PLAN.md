@@ -17,6 +17,15 @@ Use extensions for application setup, feature registration, route mapping, reque
 - Supply the current instant through injected TimeProvider and preserve UTC timestamps through database reads.
 - Map validation, missing resources, and conflicts to ProblemDetails with 400, 404, and 409.
 
+## Capacity-dependent booking duration
+
+- Extend Booking.Validate to choose a maximum of two hours when the room capacity exceeds 10, otherwise four hours as in R6.
+- Accept durations exactly equal to the applicable maximum. Return the existing BookingTooLong validation error with the correct limit in its message for longer durations.
+- Reuse the capacity already supplied by Room, CreateBookingRequestValidator, and CreateBookingHandler; keep the rule in the domain.
+- Apply the rule to newly created bookings, with no schema migration or changes to existing bookings.
+- Test capacities below, at, and above 10; exact limits and one tick beyond; a large room with one attendee; direct handler validation before the daily quota; missing-room 404 precedence; and 400 responses without writes through both route styles.
+- Update README and HTTP examples, run the tests and formatting checks, and record the change in a separate commit.
+
 ## API versioning and persistence
 
 - Expose explicit v1 routes under /api/v1 while retaining /api as the assignment-compatible v1 aliases.
@@ -42,6 +51,7 @@ R9 is the additional requirement supplied after the original plan: a participant
 
 - Test all five HTTP operations, exact payload fields, Location headers, UTC serialization, errors, and both route styles.
 - Test R1–R8 boundaries, touching intervals, cancellation, missing-room precedence, failed writes, restart persistence, and stale writes against real SQLite.
+- Test the capacity-dependent two-hour/four-hour duration limits at their exact boundaries in the domain and over HTTP.
 - Test R9 for the third booking in one room and across different rooms; independent participants; trimmed names; cancelled bookings; different UTC days; midnight crossings; offset timestamps; persisted counts; and concurrent requests across application instances.
 - Verify route validation stops invalid requests before handler dispatch.
 - Run a Release build and tests, formatting checks, migration consistency checks, dependency auditing, and a live HTTP smoke check.

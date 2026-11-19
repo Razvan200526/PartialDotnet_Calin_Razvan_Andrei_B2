@@ -48,8 +48,10 @@ public sealed class Booking
             return Result.Failure(Error.Validation("AttendeesExceedCapacity", "The room does not have enough seats."));
         if (startUtc < nowUtc)
             return Result.Failure(Error.Validation("BookingInPast", "A booking cannot start in the past."));
-        if (endUtc - startUtc > TimeSpan.FromHours(4))
-            return Result.Failure(Error.Validation("BookingTooLong", "A booking cannot last more than four hours."));
+        var maximumDurationHours = capacity > 10 ? 2 : 4;
+        if (endUtc - startUtc > TimeSpan.FromHours(maximumDurationHours))
+            return Result.Failure(Error.Validation(
+                "BookingTooLong", $"A booking cannot last more than {maximumDurationHours} hours."));
 
         return Result.Success();
     }

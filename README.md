@@ -41,13 +41,19 @@ Open roomhub.http in Rider or a REST Client extension to exercise the API. Set a
 
 Each declared type has its own file. Request-validation filters reuse domain validation, and handlers enforce rules when invoked directly.
 
+## Booking duration by room capacity
+
+Rooms with capacity greater than 10 allow bookings lasting at most two hours. Rooms with capacity 10 or less keep the four-hour limit from R6. A booking lasting exactly the applicable limit is accepted; a longer one returns 400 with the title BookingTooLong.
+
+The limit uses the room's capacity, even when only one person attends. Booking.Validate enforces it for both route validation and direct handler calls. The rule applies when creating bookings; existing bookings remain readable and cancellable.
+
 ## Participant daily limit (R9)
 
 A participant may hold at most two active bookings per UTC start date across all rooms. A third returns 409 with the title DailyBookingLimitReached.
 
 Names are trimmed and compared case-sensitively. A booking spanning midnight counts only on its UTC start date. Cancellation releases the daily allowance. The handler queries the global count and applies ParticipantBookingPolicy inside a serializable SQLite transaction, so competing requests cannot bypass the limit.
 
-The complete implementation plan, including the additional R9 requirement, is in [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md).
+The complete implementation plan, including the capacity-based duration limit and R9, is in [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md).
 
 ## Verify
 
@@ -57,7 +63,7 @@ dotnet test RoomHub.slnx --configuration Release
 dotnet format RoomHub.slnx --no-restore --verify-no-changes
 ```
 
-Integration tests use real SQLite and apply the same migrations as application startup. They cover HTTP contracts, validation, cancellation, UTC boundaries, restart persistence, stale writes, and R9 across rooms and application instances.
+Integration tests use real SQLite and apply the same migrations as application startup. They cover HTTP contracts, capacity-based duration limits, validation, cancellation, UTC boundaries, restart persistence, stale writes, and R9 across rooms and application instances.
 
 To add a database schema change:
 

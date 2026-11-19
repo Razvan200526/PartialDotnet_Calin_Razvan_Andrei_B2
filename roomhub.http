@@ -152,3 +152,49 @@ POST {{baseUrl}}{{apiPath}}/rooms/00000000-0000-0000-0000-000000000001/bookings
 Content-Type: application/json
 
 {}
+
+### 18. Create a room with capacity greater than 10 (expected: 201)
+# @name createLargeRoom
+POST {{baseUrl}}{{apiPath}}/rooms
+Content-Type: application/json
+
+{
+  "name": "Large study room",
+  "capacity": 11
+}
+
+###
+@largeRoomId = {{createLargeRoom.response.body.$.id}}
+
+### 19. Large room, exactly two hours with one attendee (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{largeRoomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "maria",
+  "startUtc": "2030-01-10T10:00:00Z",
+  "endUtc": "2030-01-10T12:00:00Z",
+  "attendees": 1
+}
+
+### 20. Large room, two hours plus one tick (expected: 400)
+POST {{baseUrl}}{{apiPath}}/rooms/{{largeRoomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "maria",
+  "startUtc": "2030-01-10T13:00:00Z",
+  "endUtc": "2030-01-10T15:00:00.0000001Z",
+  "attendees": 1
+}
+
+### 21. Room with capacity 10, exactly four hours (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId2}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "maria",
+  "startUtc": "2030-01-10T14:00:00Z",
+  "endUtc": "2030-01-10T18:00:00Z",
+  "attendees": 1
+}
