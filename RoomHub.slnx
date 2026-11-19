@@ -2,4 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/RoomHub.Api/RoomHub.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RoomHub.UnitTests/RoomHub.UnitTests.csproj" />
+    <Project Path="tests/RoomHub.IntegrationTests/RoomHub.IntegrationTests.csproj" />
+  </Folder>
 </Solution>

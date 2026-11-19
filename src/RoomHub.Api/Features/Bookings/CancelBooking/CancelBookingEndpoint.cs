@@ -11,6 +11,6 @@ public static class CancelBookingEndpoint
         {
             var result = await handler.HandleAsync(new CancelBookingCommand(id), ct);
             return result.ToHttpResult(_ => Results.NoContent());
-        }).WithName("CancelBooking");
+        });
     }
 }

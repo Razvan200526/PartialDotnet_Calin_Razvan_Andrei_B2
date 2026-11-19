@@ -11,6 +11,6 @@ public static class GetBookingEndpoint
         {
             var result = await handler.HandleAsync(new GetBookingQuery(id), ct);
             return result.ToHttpResult(booking => Results.Ok(booking));
-        }).WithName("GetBooking");
+        });
     }
 }

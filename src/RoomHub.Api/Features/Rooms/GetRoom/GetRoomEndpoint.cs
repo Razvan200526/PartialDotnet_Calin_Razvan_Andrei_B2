@@ -11,6 +11,6 @@ public static class GetRoomEndpoint
         {
             var result = await handler.HandleAsync(new GetRoomQuery(id), ct);
             return result.ToHttpResult(room => Results.Ok(room));
-        }).WithName("GetRoom");
+        });
     }
 }

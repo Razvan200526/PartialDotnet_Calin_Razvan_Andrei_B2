@@ -18,29 +18,40 @@ public sealed class Booking
         Guid roomId, string? bookedBy, DateTime startUtc, DateTime endUtc,
         int attendees, int capacity, DateTime nowUtc)
     {
-        if (string.IsNullOrWhiteSpace(bookedBy))
-            return Result<Booking>.Failure(Error.Validation("InvalidBookedBy", "BookedBy is required."));
-        if (endUtc <= startUtc)
-            return Result<Booking>.Failure(Error.Validation("InvalidRange", "The end must be after the start."));
-        if (attendees <= 0)
-            return Result<Booking>.Failure(Error.Validation("InvalidAttendees", "Attendees must be positive."));
-        if (attendees > capacity)
-            return Result<Booking>.Failure(Error.Validation("AttendeesExceedCapacity", "The room does not have enough seats."));
-        if (startUtc < nowUtc)
-            return Result<Booking>.Failure(Error.Validation("BookingInPast", "A booking cannot start in the past."));
-        if (endUtc - startUtc > TimeSpan.FromHours(4))
-            return Result<Booking>.Failure(Error.Validation("BookingTooLong", "A booking cannot last more than four hours."));
+        var validation = Validate(bookedBy, startUtc, endUtc, attendees, capacity, nowUtc);
+        if (!validation.IsSuccess)
+            return Result<Booking>.Failure(validation.Error!);
 
         return Result<Booking>.Success(new Booking
         {
             Id = Guid.NewGuid(),
             RoomId = roomId,
-            BookedBy = bookedBy.Trim(),
+            BookedBy = bookedBy!.Trim(),
             StartUtc = startUtc,
             EndUtc = endUtc,
             Attendees = attendees,
             Status = BookingStatus.Active
         });
+    }
+
+    public static Result Validate(
+        string? bookedBy, DateTime startUtc, DateTime endUtc,
+        int attendees, int capacity, DateTime nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(bookedBy))
+            return Result.Failure(Error.Validation("InvalidBookedBy", "BookedBy is required."));
+        if (endUtc <= startUtc)
+            return Result.Failure(Error.Validation("InvalidRange", "The end must be after the start."));
+        if (attendees <= 0)
+            return Result.Failure(Error.Validation("InvalidAttendees", "Attendees must be positive."));
+        if (attendees > capacity)
+            return Result.Failure(Error.Validation("AttendeesExceedCapacity", "The room does not have enough seats."));
+        if (startUtc < nowUtc)
+            return Result.Failure(Error.Validation("BookingInPast", "A booking cannot start in the past."));
+        if (endUtc - startUtc > TimeSpan.FromHours(4))
+            return Result.Failure(Error.Validation("BookingTooLong", "A booking cannot last more than four hours."));
+
+        return Result.Success();
     }
 
     internal bool Overlaps(DateTime startUtc, DateTime endUtc) =>

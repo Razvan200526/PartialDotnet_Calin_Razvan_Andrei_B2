@@ -4,6 +4,9 @@ namespace RoomHub.Api.Features.Common;
 
 public static class ResultExtensions
 {
+    public static IResult ToHttpResult(this Result result) =>
+        result.IsSuccess ? Results.NoContent() : ToProblem(result.Error!);
+
     public static IResult ToHttpResult<T>(this Result<T> result, Func<T, IResult> onSuccess) =>
         result.IsSuccess ? onSuccess(result.Value!) : ToProblem(result.Error!);
 
