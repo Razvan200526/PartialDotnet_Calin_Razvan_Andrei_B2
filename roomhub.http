@@ -1,9 +1,11 @@
 ### Variables
 @baseUrl = http://localhost:5090
+# Change to /api to exercise the original assignment routes.
+@apiPath = /api/v1
 
-### 1. Create room
+### 1. Create room (expected: 201)
 # @name createRoom
-POST {{baseUrl}}/api/rooms
+POST {{baseUrl}}{{apiPath}}/rooms
 Content-Type: application/json
 
 {
@@ -14,15 +16,15 @@ Content-Type: application/json
 ###
 @roomId = {{createRoom.response.body.$.id}}
 
-### 2. Get room
-GET {{baseUrl}}/api/rooms/{{roomId}}
+### 2. Get room (expected: 200)
+GET {{baseUrl}}{{apiPath}}/rooms/{{roomId}}
 
-### 3. Get a missing room (expected: 404)
-GET {{baseUrl}}/api/rooms/00000000-0000-0000-0000-000000000001
+### 3. Missing room (expected: 404)
+GET {{baseUrl}}{{apiPath}}/rooms/00000000-0000-0000-0000-000000000001
 
-### 4. Create booking (change the dates to the future!)
+### 4. Create booking (expected: 201; keep dates in the future)
 # @name createBooking
-POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
 Content-Type: application/json
 
 {
@@ -35,11 +37,11 @@ Content-Type: application/json
 ###
 @bookingId = {{createBooking.response.body.$.id}}
 
-### 5. Get booking
-GET {{baseUrl}}/api/bookings/{{bookingId}}
+### 5. Get booking (expected: 200)
+GET {{baseUrl}}{{apiPath}}/bookings/{{bookingId}}
 
-### 6. Overlapping booking (expected: 409)
-POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+### 6. Active overlap (expected: 409)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
 Content-Type: application/json
 
 {
@@ -49,7 +51,104 @@ Content-Type: application/json
   "attendees": 4
 }
 
-### 7. Cancel booking
-POST {{baseUrl}}/api/bookings/{{bookingId}}/cancel
+### 7. Touching interval (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
+Content-Type: application/json
 
-### 8. Add your own requests here for the rules in ASSIGNMENT.md
+{
+  "bookedBy": "bogdan",
+  "startUtc": "2030-01-10T12:00:00Z",
+  "endUtc": "2030-01-10T13:00:00Z",
+  "attendees": 4
+}
+
+### 8. Longer than four hours (expected: 400)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-10T14:00:00Z",
+  "endUtc": "2030-01-10T18:01:00Z",
+  "attendees": 4
+}
+
+### 9. Booking in the past (expected: 400)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2000-01-10T10:00:00Z",
+  "endUtc": "2000-01-10T11:00:00Z",
+  "attendees": 4
+}
+
+### 10. Cancel booking (expected: 204)
+POST {{baseUrl}}{{apiPath}}/bookings/{{bookingId}}/cancel
+
+### 11. Repeated cancellation (expected: 409)
+POST {{baseUrl}}{{apiPath}}/bookings/{{bookingId}}/cancel
+
+### 12. Reuse cancelled interval (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-10T10:00:00Z",
+  "endUtc": "2030-01-10T12:00:00Z",
+  "attendees": 4
+}
+
+### 13. Create another room (expected: 201)
+# @name createRoom2
+POST {{baseUrl}}{{apiPath}}/rooms
+Content-Type: application/json
+
+{
+  "name": "Study room 2",
+  "capacity": 10
+}
+
+###
+@roomId2 = {{createRoom2.response.body.$.id}}
+
+### 14. Same participant, second active booking that day (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId2}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-10T10:00:00Z",
+  "endUtc": "2030-01-10T12:00:00Z",
+  "attendees": 4
+}
+
+### 15. Third active booking, another room and interval (expected: 409)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId2}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-10T14:00:00Z",
+  "endUtc": "2030-01-10T15:00:00Z",
+  "attendees": 4
+}
+
+### 16. Same participant, different UTC start date (expected: 201)
+POST {{baseUrl}}{{apiPath}}/rooms/{{roomId2}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T12:00:00Z",
+  "attendees": 4
+}
+
+### 17. Missing room precedes business validation (expected: 404)
+POST {{baseUrl}}{{apiPath}}/rooms/00000000-0000-0000-0000-000000000001/bookings
+Content-Type: application/json
+
+{}
