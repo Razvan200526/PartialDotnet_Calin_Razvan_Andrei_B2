@@ -1,0 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RoomHub.Api.Domain.Rooms;
+
+namespace RoomHub.Api.Infrastructure.Persistence.Configurations;
+
+public sealed class RoomConfiguration : IEntityTypeConfiguration<Room>
+{
+    public void Configure(EntityTypeBuilder<Room> builder)
+    {
+        builder.HasKey(room => room.Id);
+        builder.Property(room => room.Id).ValueGeneratedNever();
+        builder.Property(room => room.Name).IsRequired();
+        builder.Property(room => room.Capacity).IsRequired();
+        builder.Property(room => room.ScheduleVersion).IsConcurrencyToken();
+        builder.HasMany(room => room.Bookings)
+            .WithOne()
+            .HasForeignKey(booking => booking.RoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(room => room.Bookings).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
