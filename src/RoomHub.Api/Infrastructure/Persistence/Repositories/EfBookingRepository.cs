@@ -9,4 +9,13 @@ public sealed class EfBookingRepository(AppDbContext db) : IBookingRepository
         db.Bookings.SingleOrDefaultAsync(booking => booking.Id == id, ct);
 
     public void Add(Booking booking) => db.Bookings.Add(booking);
+
+    public Task<int> CountActiveForParticipantOnDayAsync(
+        string bookedBy, DateOnly utcDay, CancellationToken ct = default)
+    {
+        var day = utcDay.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        return db.Bookings.CountAsync(booking =>
+            booking.BookedBy == bookedBy && booking.Status == BookingStatus.Active
+            && booking.StartUtc.Date == day, ct);
+    }
 }
