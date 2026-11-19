@@ -51,8 +51,8 @@ public sealed class UnitOfWorkTests : ApiTestBase
         await using var second = Factory.Services.CreateAsyncScope();
         var firstBooking = await first.ServiceProvider.GetRequiredService<IBookingRepository>().GetByIdAsync(created.Id);
         var secondBooking = await second.ServiceProvider.GetRequiredService<IBookingRepository>().GetByIdAsync(created.Id);
-        Assert.True(firstBooking!.Cancel().IsSuccess);
-        Assert.True(secondBooking!.Cancel().IsSuccess);
+        Assert.True(firstBooking!.Cancel(ApiFactory.Now.UtcDateTime).IsSuccess);
+        Assert.True(secondBooking!.Cancel(ApiFactory.Now.UtcDateTime).IsSuccess);
         Assert.True((await first.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync()).IsSuccess);
         var rejected = await second.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync();
         Assert.Equal(ErrorType.Conflict, rejected.Error!.Type);

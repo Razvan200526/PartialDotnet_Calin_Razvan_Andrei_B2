@@ -84,7 +84,8 @@ Content-Type: application/json
   "attendees": 4
 }
 
-### 10. Cancel booking (expected: 204)
+### 10. Cancel booking at least 60 minutes before it starts (expected: 204)
+# To test CancellationWindowClosed (409), create a booking starting less than an hour from now.
 POST {{baseUrl}}{{apiPath}}/bookings/{{bookingId}}/cancel
 
 ### 11. Repeated cancellation (expected: 409)

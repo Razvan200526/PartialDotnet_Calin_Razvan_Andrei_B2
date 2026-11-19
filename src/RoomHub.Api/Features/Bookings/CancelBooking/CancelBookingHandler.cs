@@ -4,7 +4,8 @@ using RoomHub.Api.Features.Common;
 
 namespace RoomHub.Api.Features.Bookings.CancelBooking;
 
-public sealed class CancelBookingHandler(IBookingRepository bookings, IUnitOfWork unitOfWork)
+public sealed class CancelBookingHandler(
+    IBookingRepository bookings, IUnitOfWork unitOfWork, TimeProvider timeProvider)
     : ICommandHandler<CancelBookingCommand, Unit>
 {
     public async Task<Result<Unit>> HandleAsync(CancelBookingCommand command, CancellationToken ct = default)
@@ -13,7 +14,7 @@ public sealed class CancelBookingHandler(IBookingRepository bookings, IUnitOfWor
         if (booking is null)
             return Result<Unit>.Failure(Error.NotFound("BookingNotFound", "The booking does not exist."));
 
-        var result = booking.Cancel();
+        var result = booking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
         if (!result.IsSuccess)
             return Result<Unit>.Failure(result.Error!);
 

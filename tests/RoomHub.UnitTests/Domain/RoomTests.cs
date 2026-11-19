@@ -87,10 +87,10 @@ public sealed class RoomTests
     public void Cancellation_FreesIntervalAndRejectsRepeatedCancellation()
     {
         var room = Room.Create("Study room", 10).Value!;
-        var booking = room.Book("ana", Now, Now.AddHours(1), 4, Now).Value!;
-        Assert.True(booking.Cancel().IsSuccess);
+        var booking = room.Book("ana", Now.AddHours(1), Now.AddHours(2), 4, Now).Value!;
+        Assert.True(booking.Cancel(Now).IsSuccess);
         Assert.Equal(BookingStatus.Cancelled, booking.Status);
-        Assert.Equal(ErrorType.Conflict, booking.Cancel().Error!.Type);
-        Assert.True(room.Book("bogdan", Now, Now.AddHours(1), 4, Now).IsSuccess);
+        Assert.Equal(ErrorType.Conflict, booking.Cancel(Now).Error!.Type);
+        Assert.True(room.Book("bogdan", Now.AddHours(1), Now.AddHours(2), 4, Now).IsSuccess);
     }
 }

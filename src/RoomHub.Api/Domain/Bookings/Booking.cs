@@ -59,10 +59,14 @@ public sealed class Booking
     internal bool Overlaps(DateTime startUtc, DateTime endUtc) =>
         Status == BookingStatus.Active && StartUtc < endUtc && startUtc < EndUtc;
 
-    public Result Cancel()
+    public Result Cancel(DateTime nowUtc)
     {
         if (Status == BookingStatus.Cancelled)
             return Result.Failure(Error.Conflict("BookingAlreadyCancelled", "The booking is already cancelled."));
+
+        if (StartUtc - nowUtc < TimeSpan.FromMinutes(60))
+            return Result.Failure(Error.Conflict(
+                "CancellationWindowClosed", "A booking can only be cancelled at least 60 minutes before it starts."));
 
         Status = BookingStatus.Cancelled;
         return Result.Success();

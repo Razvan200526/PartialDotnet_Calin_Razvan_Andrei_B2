@@ -27,7 +27,7 @@ The original assignment routes remain available. Explicit v1 routes provide the 
 | Get booking | GET /api/bookings/{id} | GET /api/v1/bookings/{id} |
 | Cancel booking | POST /api/bookings/{id}/cancel | POST /api/v1/bookings/{id}/cancel |
 
-Creation returns 201 with a Location header matching the requested route style. Cancellation returns 204. Errors use application/problem+json: 400 for validation, 404 for missing resources, and 409 for conflicts.
+Creation returns 201 with a Location header matching the requested route style. Successful cancellation returns 204. Errors use application/problem+json: 400 for validation, 404 for missing resources, and 409 for conflicts.
 
 Open roomhub.http in Rider or a REST Client extension to exercise the API. Set apiPath to /api to run the same requests through the assignment routes.
 
@@ -45,7 +45,15 @@ Each declared type has its own file. Request-validation filters reuse domain val
 
 Rooms with capacity greater than 10 allow bookings lasting at most two hours. Rooms with capacity 10 or less keep the four-hour limit from R6. A booking lasting exactly the applicable limit is accepted; a longer one returns 400 with the title BookingTooLong.
 
-The limit uses the room's capacity, even when only one person attends. Booking.Validate enforces it for both route validation and direct handler calls. The rule applies when creating bookings; existing bookings remain readable and cancellable.
+The limit uses the room's capacity, even when only one person attends. Booking.Validate enforces it for both route validation and direct handler calls. The rule applies when creating bookings; existing bookings retain their stored data and follow the cancellation rules below.
+
+## Cancellation window
+
+An active booking can be cancelled only when its start is at least 60 minutes after the current time. Exactly 60 minutes is allowed. A shorter interval, including a booking that has already started or ended, returns 409 with the title CancellationWindowClosed.
+
+CancelBookingHandler reads the current UTC time from the injected TimeProvider and passes it to Booking.Cancel(nowUtc), where the rule is enforced. A rejected cancellation leaves the booking active, so it still occupies the room and counts toward the participant's daily limit.
+
+A missing booking returns 404. Cancelling an already cancelled booking keeps the existing 409 BookingAlreadyCancelled response.
 
 ## Participant daily limit (R9)
 
@@ -53,7 +61,7 @@ A participant may hold at most two active bookings per UTC start date across all
 
 Names are trimmed and compared case-sensitively. A booking spanning midnight counts only on its UTC start date. Cancellation releases the daily allowance. The handler queries the global count and applies ParticipantBookingPolicy inside a serializable SQLite transaction, so competing requests cannot bypass the limit.
 
-The complete implementation plan, including the capacity-based duration limit and R9, is in [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md).
+The complete implementation plan, including the capacity-based duration limit, cancellation window, and R9, is in [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md).
 
 ## Verify
 
@@ -63,7 +71,7 @@ dotnet test RoomHub.slnx --configuration Release
 dotnet format RoomHub.slnx --no-restore --verify-no-changes
 ```
 
-Integration tests use real SQLite and apply the same migrations as application startup. They cover HTTP contracts, capacity-based duration limits, validation, cancellation, UTC boundaries, restart persistence, stale writes, and R9 across rooms and application instances.
+Integration tests use real SQLite and apply the same migrations as application startup. They cover HTTP contracts, capacity-based duration limits, validation, cancellation boundaries using an adjustable TimeProvider, UTC boundaries, restart persistence, stale writes, and R9 across rooms and application instances.
 
 To add a database schema change:
 

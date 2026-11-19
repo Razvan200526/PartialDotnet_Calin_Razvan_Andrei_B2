@@ -69,13 +69,13 @@ public sealed class BookingHandlerTests
     public async Task CancelMissingOrAlreadyCancelled_DoesNotCommit()
     {
         var unit = new FakeUnitOfWork();
-        var missing = await new CancelBookingHandler(new FakeBookingRepository(), unit)
+        var missing = await new CancelBookingHandler(new FakeBookingRepository(), unit, new FixedTimeProvider(Now))
             .HandleAsync(new CancelBookingCommand(Guid.NewGuid()));
         Assert.Equal(ErrorType.NotFound, missing.Error!.Type);
         var booking = Room.Create("Room", 10).Value!
-            .Book("ana", Now.UtcDateTime, Now.AddHours(1).UtcDateTime, 1, Now.UtcDateTime).Value!;
-        booking.Cancel();
-        var cancelled = await new CancelBookingHandler(new FakeBookingRepository(booking), unit)
+            .Book("ana", Now.AddHours(1).UtcDateTime, Now.AddHours(2).UtcDateTime, 1, Now.UtcDateTime).Value!;
+        booking.Cancel(Now.UtcDateTime);
+        var cancelled = await new CancelBookingHandler(new FakeBookingRepository(booking), unit, new FixedTimeProvider(Now))
             .HandleAsync(new CancelBookingCommand(booking.Id));
         Assert.Equal(ErrorType.Conflict, cancelled.Error!.Type);
         Assert.Equal(0, unit.SaveCalls);
